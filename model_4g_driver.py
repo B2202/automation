@@ -63,15 +63,15 @@ class model4g():
         self.watch_thread_killer.set()
         
     def watch_status(self):
-#        self.last_ps_curr=self.get_ps_curr()
+#        self.last_ps_curr=self.get_ps_field()
         while not self.watch_thread_killer.is_set():
             helper=self.get_switch_htr()
 
-            self.ps_curr_1=self.get_ps_curr()
+            self.ps_curr_1=self.get_ps_field()
             if isinstance(self.ps_curr_1,(float,)):
                 self.ps_curr=self.ps_curr_1
 
-            self.mag_curr_1=self.get_mag_curr()
+            self.mag_curr_1=self.get_mag_field()
             if isinstance(self.mag_curr_1,(float,)):
                 self.mag_curr=self.mag_curr_1
 
@@ -100,7 +100,7 @@ class model4g():
 ###        get methods
 
 
-    def get_mag_curr(self):
+    def get_mag_field(self):
 
         try:
             raw_output=self._device.query('IMAG?')
@@ -110,7 +110,7 @@ class model4g():
             print '4G: Weird reply to IMAG? Query!'
             return None
 
-    def get_ps_curr(self):
+    def get_ps_field(self):
 
         try:
             raw_output=self._device.query('IOUT?')
@@ -279,7 +279,7 @@ class model4g():
             self._device.write('SWEEP ZERO FAST')
             
 
-    def set_persistent():
+    def set_persistent(self):
         if self.pshtr_open==True:
             time.sleep(wait_before_off)
             while self.pshtr_open==True:
@@ -322,7 +322,7 @@ class model4g():
         time.sleep(wait_after_on)
         
         self.set_rate(0,rate)        
-        if self.get_mag_curr()<target:
+        if self.get_mag_field()<target:
             self.set_ulim(target)
             self.sweep('UP',rate)
         else:

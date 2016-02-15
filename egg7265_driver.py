@@ -43,13 +43,14 @@ class egg7265():
         try:
             raw_output=self._device.query('XY.')
             index=raw_output.find(',')
-            x=float(raw_output[0:index-1])
-            y=float(raw_output[index+1,len(a)-2])
+            x=float(raw_output[0:index])
+            y=float(raw_output[index+1:len(raw_output)-2])
+
             return x,y
         except:
             print "Failed to read XY"
             a=a
-            return None
+            return None, None
 
 
 
