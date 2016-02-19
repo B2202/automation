@@ -46,6 +46,6 @@ while True:
     print result1[0,5]
  
     result=np.append(result,result1,axis=0)
-    np.savetxt('lockin_capillary2.dat',result)
+    np.savetxt('lockin_therm_holder4.dat',result)
     time.sleep(1)
 

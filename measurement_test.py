@@ -6,8 +6,8 @@ sys.path.append('H:\public_html\python')
 from egg7265_driver import egg7265
 from levelmeter_driver import lm500
 from ls370_driver import ls370
-from cs4_driver import cs4
-from model_4g_driver import model4g
+from cs4_driver_v2 import cs4
+from model_4g_driver_v2 import model4g
 from rotator import rotator
 import time
 
@@ -60,7 +60,7 @@ class measure():
         self.filename=filename1
 
         self.header='time temp_ru temp_cx Ux1 Uy1 Ux2 Uy2 hps_mag hps_curr hps_switch vps_mag vps_curr vps_switch angle heater_pw he_level\n'
-        self.stable_crit=0.005
+        self.stable_crit=0.01
 
 
         self.start_time=time.time()
@@ -86,6 +86,7 @@ class measure():
         self.vps=model4g(mod4g_addr)
 
         self.rot=rotator(rot_addr)
+        
         
         #############################################################
 
@@ -181,7 +182,7 @@ class measure():
         print 'start logging (the log_data(self))'
 
 
-        len_hist=100
+        len_hist=30
         self.time_hist=time.time()-self.start_time
 
         self.ux1,self.uy1=self.egg1.get_xy()
@@ -210,7 +211,7 @@ class measure():
 
         i=0
         while self.logging_switch.is_set():
-            print i, 'log_data'
+#            print i, 'log_data'
             i=i+1
             self.time=time.time()-self.start_time
             self.time_hist=np.append(self.time_hist,self.time)
@@ -292,13 +293,36 @@ class measure():
 
     def wait(self,what,how_long):
 
-        start_mean=np.mean(what[0:10])
-        end_mean=np.mean(what[89:99])
-        while abs(1-start_mean/end_mean)>self.stable_crit:       
-            start_mean=np.mean(what[0:10])
-            end_mean=np.mean(what[89:99])
-            time.sleep(1)    
-        
+        if what.find('hps')>-1:
+            data=self.hps_mag_field_hist
+        elif what.find('vps')>-1:
+            data=self.vps_mag_field_hist
+#        elif what.find('cx')>-1:
+#            data=self.temp_cx_hist
+#        elif what.find('ru')>-1:
+#            data=self.temp_ru_hist
+        else:
+            print 'measure.wait: I dont know what you mean by waiting for ', what
+            return -1
+        start_mean=np.mean(data[-10:-1])
+        end_mean=np.mean(data[0:10])
+        while abs(1-start_mean/end_mean)>self.stable_crit: 
+#            print "measure.wait: ", abs(1-start_mean/end_mean), what[0],what[-1]
+            if what.find('hps')>-1: 
+                data=self.hps_mag_field_hist
+            elif what.find('vps')>-1:
+                data=self.vps_mag_field_hist
+#        elif what.find('cx')>-1:
+#            data=self.temp_cx_hist
+#        elif what.find('ru')>-1:
+#            data=self.temp_ru_hist
+
+            start_mean=np.mean(data[-10:-1])
+            end_mean=np.mean(data[0:10])
+            time.sleep(1)
+#        print "measure.wait before sleep"
+        time.sleep(how_long)
+#        print "measure.wait after sleep"
         return 0
 
 
@@ -356,3 +380,6 @@ class measure():
         self.hps.kill_watch_status()
         self.vps.kill_watch_status()
         self.logging_switch.clear()
+        time.sleep(5)
+        print "Tried to kill all threads. There are still ", threading.active_count(), " alive"
+        threading.enumerate()

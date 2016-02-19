@@ -39,5 +39,5 @@ while True:
     print result1[0,1]
     
     result=np.append(result,result1,axis=0)
-    np.savetxt('r_capillary2.dat',result)
+    np.savetxt('r_therm_holder.dat',result)
 

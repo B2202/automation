@@ -6,22 +6,23 @@ import threading
 
 a=0
 
-fcr=0.03499            # field current ratio in T/A, Imax=11.44A
+fcr=0.0585            # field current ratio in T/A
 
 max_sr_low=0.144      # max sweep rate up to 50A / 3T 
 max_sr_high=0.072     # max sweep rate up to 68.43A / 4T
 
-wait_before_on=15
-wait_after_on=10
+wait_before_on=20
+wait_after_on=15
 wait_before_off=20
-wait_after_off=15
+wait_after_off=25
 
 curr_sweep_tol=0.0002           # maximum difference between ps_curr and
                                 # ulim or llim to be considered equal
-output_tolerance=0.0003         #  maximum difference between ps_curr and mag_curr
-                                # to open pshtr
 
-class model4g():
+output_tolerance=0.001
+
+
+class cs4():
     def __init__(self,adress):
         rm=visa.ResourceManager()
         liste=rm.list_resources()
@@ -72,7 +73,6 @@ class model4g():
 
         self.time1=0
         self.time2=0
-
         
     def kill_watch_status(self):
         self.watch_thread_killer.set()
@@ -117,7 +117,7 @@ class model4g():
             self.mag_field=out
             return None
         except:
-            print '4G: Weird reply to IMAG? Query!'
+            print 'CS4: Weird reply to IMAG? Query!'
             return None
 
     def _get_mag_field(self):
@@ -136,7 +136,7 @@ class model4g():
             self.ps_field=out
             return None
         except:
-            print '4G: Weird reply to IOUT? Query!'
+            print 'CS4: Weird reply to IOUT? Query!'
             return None
 
     def _get_ps_field(self):
@@ -161,10 +161,10 @@ class model4g():
                 self.pshtr=True
                 return None
             else:
-                print '4G: Weird reply to PSHTR Query!', raw_output
+                print 'CS4: Weird reply to PSHTR Query!', raw_output
                 return None
         except:
-            print '4G exception: Weird reply to PSHTR? Query!'
+            print 'CS4 exception: Weird reply to PSHTR? Query!'
             return None
 
     def _get_switch_htr(self):
@@ -194,10 +194,10 @@ class model4g():
                 return None
 
             else:
-                print '4G: Weird reply to SWEEP Query!', raw_output
+                print 'CS4: Weird reply to SWEEP Query!', raw_output
                 return None
         except:
-            print '4G exception: Weird reply to SWEEP? Query!'
+            print 'CS4 exception: Weird reply to SWEEP? Query!'
             return None        
 
     def _get_sweep(self):
@@ -215,7 +215,7 @@ class model4g():
             self.llim=out
             return None
         except:
-            print '4G: Weird reply to %s Query!' % 'LLIM?'
+            print 'CS4: Weird reply to %s Query!' % 'LLIM?'
             return None        
     def _get_llim(self):
         self.command_queue.insert(0,'self.p_get_llim()')
@@ -232,7 +232,7 @@ class model4g():
             self.ulim=out
             return None
         except:
-            print '4G: Weird reply to %s Query!' % 'LLIM?'
+            print 'CS4: Weird reply to %s Query!' % 'LLIM?'
             return None        
 
     def _get_ulim(self):
@@ -253,7 +253,7 @@ class model4g():
             llim_string='LLIM ' + str(field)+'\n'
             self._device.write(llim_string)
         except:
-            print '4G: Weird reply to %s Query!' % (llim_string)
+            print 'CS4: Weird reply to %s Query!' % (llim_string)
             return None
 
     def set_llim(self, field):
@@ -269,7 +269,7 @@ class model4g():
             ulim_string='ULIM ' + str(field)+'\n'
             self._device.write(ulim_string)
         except:
-            print '4G: Weird reply to %s Query!' % (ulim_string)
+            print 'CS4: Weird reply to %s Query!' % (ulim_string)
             return None
 
     def set_ulim(self, field):
@@ -284,7 +284,7 @@ class model4g():
             range_string='RANGE ' + str(number)+' '+str(limit)+'\n'
             self._device.write(range_string)
         except:
-            print '4G: Weird reply to %s Query!' % (range_string)
+            print 'CS4: Weird reply to %s Query!' % (range_string)
             return None            
 
     def set_range(self, number, limit):
@@ -303,7 +303,7 @@ class model4g():
             rate_string='RATE ' + str(number)+' '+str(rate)+'\n'
             self._device.write(rate_string)
         except:
-            print '4G: Weird reply to %s Query!' % (rate_string)
+            print 'CS4: Weird reply to %s Query!' % (rate_string)
             return None     
 
     def set_rate(self, number, rate):
@@ -330,7 +330,7 @@ class model4g():
 #            print "sweep string ", sweep_string 
             self._device.write(sweep_string)
         except:
-            print '4G: Weird reply to %s Query!' % (sweep_string)
+            print 'CS4: Weird reply to %s Query!' % (sweep_string)
             return None     
 
     def sweep(self, direction, rate):
@@ -348,7 +348,7 @@ class model4g():
         try:
             self._device.write(switch_string)
         except:
-            print '4G: Weird reply to %s Query!' % (switch_string)
+            print 'CS4: Weird reply to %s Query!' % (switch_string)
             return None     
         
     def set_switch_htr(self, switch):
@@ -394,19 +394,19 @@ class model4g():
         if self.pshtr==True:
             self.time2=time.time()
             print "sweep duration", self.time2-self.time1
-            print "4G: Wait before OFF"
+            print "CS4: Wait before OFF"
             time.sleep(wait_before_off)
             while self.pshtr==True:
                 self.set_switch_htr(False)
                 time.sleep(1)
-            print "4G: Wait after OFF"
+            print "CS4: Wait after OFF"
             time.sleep(wait_after_off)
             self.zero_current()
             while self.mag_sweep==True:
                 time.sleep(2)
 
     def sweep_field_watch(self,driven):
-#        print '4G: entered sweep_field_watch', self.mag_sweep
+#        print 'CS4: entered sweep_field_watch', self.mag_sweep
         time.sleep(10)
         while self.mag_sweep :
             time.sleep(2)
@@ -417,27 +417,27 @@ class model4g():
     def sweep_field(self, target, rate, driven=False):
         if not self.pshtr:
             self.adjust_current()
-            print '4G: Wait before ON'
+            print 'CS4: Wait before ON'
             time.sleep(wait_before_on)
                 
             if np.abs(self.mag_field-self.ps_field)< output_tolerance:
                 while not self.pshtr:
                     self.set_switch_htr(True)
-                    print "4G: Tried to open switch heater"
+                    print "CS4: Tried to open switch heater"
                     time.sleep(1)
             else:
-                print "4G: Else bit, recall myself"
+                print "CS4: Else bit, recall myself"
                 self.sweep_field(target,rate)
                 return 0
             
 #            if not self.pshtr:
 #                self.sweep_field(target,rate)
 #                return 0
-        print '4G: Wait after ON'
+        print 'CS4: Wait after ON'
         time.sleep(wait_after_on)
         
         self.set_rate(0,rate)
-        
+
         if self.mag_field<target:
             self.set_ulim(target)
             time.sleep(1)
@@ -446,8 +446,10 @@ class model4g():
             self.set_llim(target)
             time.sleep(1)
             self.sweep('DOWN',rate)
+        
         self.time1=time.time()
         sweep_thread=threading.Thread(target=self.sweep_field_watch, args=(driven,))
         sweep_thread.setDaemon(True)
         sweep_thread.start()
         sweep_thread.join()
+        
